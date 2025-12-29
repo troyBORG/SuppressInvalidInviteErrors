@@ -69,8 +69,16 @@ The mod uses Harmony `Prefix` patches to intercept these methods before they exe
 - **`ForwardToAdmins` patch**: Checks if the world exists using `GetCorrespondingHostedWorld()`. If `null`, returns `false` to skip the original method entirely.
 - **`ProcessGrantedInviteRequest` patch**: Uses reflection to access the private `_forwardedInviteRequests` dictionary and checks if the request ID exists. If not found, returns `false` to skip the original method.
 
-Both patches only skip execution for invalid/stale requests, allowing valid invite requests to be processed normally.
+Both patches only skip execution for invalid/stale requests, allowing valid invite requests to be processed normally. The patches also check configuration settings to allow users to enable/disable each suppression feature independently.
 
+## Configuration
+
+The mod provides two configuration options that can be toggled in the ResoniteModLoader configuration:
+
+- **`SuppressForwardToAdminsErrors`** (default: `true`) - Suppresses "Couldn't find hosted world for invite request" errors when invite requests reference non-existent sessions
+- **`SuppressProcessGrantedInviteWarnings`** (default: `true`) - Suppresses "Received granted invite request that has not been forwarded in this session" warnings for old invite requests
+
+Both options are enabled by default. You can disable them if you want to see the original error messages for debugging purposes.
 
 ## Screenshots
 <!-- If your mod has visible effects in the game, attach some images or video of it in-use here! Otherwise remove this section -->
@@ -80,3 +88,4 @@ Both patches only skip execution for invalid/stale requests, allowing valid invi
 1. Install [ResoniteModLoader](https://github.com/resonite-modding-group/ResoniteModLoader).
 2. Place `SuppressInvalidInviteErrors.dll` into your `rml_mods` folder. This folder should be at `C:\Program Files (x86)\Steam\steamapps\common\Resonite\rml_mods` for a default install. You can create it if it's missing, or if you launch the game once with ResoniteModLoader installed it will create this folder for you.
 3. Start the game. If you want to verify that the mod is working you can check your Resonite logs - the error messages should no longer appear.
+4. (Optional) Configure the mod settings using ResoniteModLoader's configuration system if you want to adjust the suppression behavior.

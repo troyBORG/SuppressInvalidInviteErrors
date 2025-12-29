@@ -1,6 +1,7 @@
 using FrooxEngine;
 using HarmonyLib;
 using ResoniteModLoader;
+using SkyFrost.Base;
 using System.Reflection;
 
 namespace SuppressInvalidInviteErrors;
@@ -8,11 +9,30 @@ namespace SuppressInvalidInviteErrors;
 public class SuppressInvalidInviteErrorsMod : ResoniteMod {
 	internal const string VERSION_CONSTANT = "1.0.0";
 	public override string Name => "SuppressInvalidInviteErrors";
-	public override string Author => "ExampleAuthor";
+	public override string Author => "troyBORG";
 	public override string Version => VERSION_CONSTANT;
-	public override string Link => "https://github.com/resonite-modding-group/ExampleMod/";
+	public override string Link => "https://github.com/troyBORG/SuppressInvalidInviteErrors";
+
+	[AutoRegisterConfigKey]
+	private static readonly ModConfigurationKey<bool> SuppressForwardToAdminsErrors = new ModConfigurationKey<bool>(
+		"SuppressForwardToAdminsErrors",
+		"Suppress 'Couldn't find hosted world for invite request' errors when invite requests reference non-existent sessions",
+		() => true
+	);
+
+	[AutoRegisterConfigKey]
+	private static readonly ModConfigurationKey<bool> SuppressProcessGrantedInviteWarnings = new ModConfigurationKey<bool>(
+		"SuppressProcessGrantedInviteWarnings",
+		"Suppress 'Received granted invite request that has not been forwarded in this session' warnings for old invite requests",
+		() => true
+	);
+
+	private static ModConfiguration? Config;
 
 	public override void OnEngineInit() {
+		Config = GetConfiguration();
+		Config.Save(true);
+
 		Harmony harmony = new("com.example.SuppressInvalidInviteErrors");
 		harmony.PatchAll();
 	}
@@ -24,6 +44,11 @@ public class SuppressInvalidInviteErrorsMod : ResoniteMod {
 	[HarmonyPatch(typeof(InviteRequestManager), "ForwardToAdmins")]
 	class InviteRequestManager_ForwardToAdmins_Patch {
 		static bool Prefix(InviteRequestManager __instance, Message incomingMessage, InviteRequest request) {
+			// Check if suppression is enabled
+			if (Config != null && !Config.GetValue(SuppressForwardToAdminsErrors)) {
+				return true; // Let original method run if suppression is disabled
+			}
+
 			// Check if the world exists before proceeding
 			World world = __instance.GetCorrespondingHostedWorld(request);
 			if (world == null) {
@@ -46,6 +71,11 @@ public class SuppressInvalidInviteErrorsMod : ResoniteMod {
 		private static FieldInfo? _forwardedInviteRequestsField;
 
 		static bool Prefix(InviteRequestManager __instance, Message incomingMessage, InviteRequest request) {
+			// Check if suppression is enabled
+			if (Config != null && !Config.GetValue(SuppressProcessGrantedInviteWarnings)) {
+				return true; // Let original method run if suppression is disabled
+			}
+
 			// Lazy initialization of the field info
 			if (_forwardedInviteRequestsField == null) {
 				_forwardedInviteRequestsField = typeof(InviteRequestManager).GetField("_forwardedInviteRequests", BindingFlags.NonPublic | BindingFlags.Instance);
