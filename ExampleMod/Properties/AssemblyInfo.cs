@@ -1,9 +1,9 @@
 ﻿using System.Reflection;
 
-[assembly: AssemblyTitle("ExampleMod")]
-[assembly: AssemblyProduct("ExampleMod")]
-[assembly: AssemblyDescription("Description of your mod")]
+[assembly: AssemblyTitle("SuppressInvalidInviteErrors")]
+[assembly: AssemblyProduct("SuppressInvalidInviteErrors")]
+[assembly: AssemblyDescription("Suppresses error messages from invalid invite requests on Headless server startup")]
 [assembly: AssemblyCompany("ExampleAuthor")]
 [assembly: AssemblyCopyright("Copyright © 2025 ExampleAuthor")]
-[assembly: AssemblyVersion(ExampleMod.ExampleMod.VERSION_CONSTANT)]
-[assembly: AssemblyFileVersion(ExampleMod.ExampleMod.VERSION_CONSTANT)]
+[assembly: AssemblyVersion(SuppressInvalidInviteErrors.SuppressInvalidInviteErrorsMod.VERSION_CONSTANT)]
+[assembly: AssemblyFileVersion(SuppressInvalidInviteErrors.SuppressInvalidInviteErrorsMod.VERSION_CONSTANT)]
