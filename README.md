@@ -15,50 +15,54 @@ This mod patches two methods in `InviteRequestManager` to silently ignore invali
 1. **`ForwardToAdmins`** - Silently ignores invite requests for worlds/sessions that no longer exist
 2. **`ProcessGrantedInviteRequest`** - Silently ignores old granted invite requests that weren't forwarded in the current session
 
-## Technical Details
+<details>
+  <summary><strong>Technical Details</strong></summary>
 
-### Error Locations in Decompiled Code
 
-The errors occur in `FrooxEngine/InviteRequestManager.cs`:
+  ### Error Locations in Decompiled Code
 
-#### 1. "Couldn't find hosted world for invite request" Error
+  The errors occur in `FrooxEngine/InviteRequestManager.cs`:
 
-**Location**: `InviteRequestManager.ForwardToAdmins()` method  
-**Line**: ~144 in decompiled code  
-**Code Path**:
-```csharp
-// Line 140: Check if world exists
-CS$<>8__locals1.world = this.GetCorrespondingHostedWorld(CS$<>8__locals1.request);
-if (CS$<>8__locals1.world == null)
-{
-    // Line 144: Error logged here
-    defaultInterpolatedStringHandler.AppendLiteral("Couldn't find hosted world for invite request: ");
-    defaultInterpolatedStringHandler.AppendFormatted<InviteRequest>(CS$<>8__locals1.request);
-    UniLog.Warning(defaultInterpolatedStringHandler.ToStringAndClear(), false);
-    // Line 147: Task.Run that may send error messages to users
-    Task.Run<bool>(delegate { ... });
-    return;
-}
-```
+  #### 1. "Couldn't find hosted world for invite request" Error
 
-**Issue**: When an old invite request references a session that no longer exists, `GetCorrespondingHostedWorld()` returns `null`, triggering the warning log and a Task that may send error messages to users.
+  **Location**: `InviteRequestManager.ForwardToAdmins()` method  
+  **Line**: ~144 in decompiled code  
+  **Code Path**:
+  ```csharp
+  // Line 140: Check if world exists
+  CS$<>8__locals1.world = this.GetCorrespondingHostedWorld(CS$<>8__locals1.request);
+  if (CS$<>8__locals1.world == null)
+  {
+      // Line 144: Error logged here
+      defaultInterpolatedStringHandler.AppendLiteral("Couldn't find hosted world for invite request: ");
+      defaultInterpolatedStringHandler.AppendFormatted<InviteRequest>(CS$<>8__locals1.request);
+      UniLog.Warning(defaultInterpolatedStringHandler.ToStringAndClear(), false);
+      // Line 147: Task.Run that may send error messages to users
+      Task.Run<bool>(delegate { ... });
+      return;
+  }
+  ```
 
-#### 2. "Received granted invite request that has not been forwarded in this session" Warning
+  **Issue**: When an old invite request references a session that no longer exists, `GetCorrespondingHostedWorld()` returns `null`, triggering the warning log and a Task that may send error messages to users.
 
-**Location**: `InviteRequestManager.ProcessGrantedInviteRequest()` method  
-**Line**: ~59 in decompiled code  
-**Code Path**:
-```csharp
-// Line 57: Check if request was forwarded in this session
-if (!this._forwardedInviteRequests.TryGetValue(CS$<>8__locals1.request.InviteRequestId, out CS$<>8__locals1.state))
-{
-    // Line 59: Warning logged here
-    string text = "Received granted invite request that has not been forwarded in this session: ";
-    InviteRequest request2 = CS$<>8__locals1.request;
-    UniLog.Warning(text + ((request2 != null) ? request2.ToString() : null), false);
-    return;
-}
-```
+  #### 2. "Received granted invite request that has not been forwarded in this session" Warning
+
+  **Location**: `InviteRequestManager.ProcessGrantedInviteRequest()` method  
+  **Line**: ~59 in decompiled code  
+  **Code Path**:
+  ```csharp
+  // Line 57: Check if request was forwarded in this session
+  if (!this._forwardedInviteRequests.TryGetValue(CS$<>8__locals1.request.InviteRequestId, out CS$<>8__locals1.state))
+  {
+      // Line 59: Warning logged here
+      string text = "Received granted invite request that has not been forwarded in this session: ";
+      InviteRequest request2 = CS$<>8__locals1.request;
+      UniLog.Warning(text + ((request2 != null) ? request2.ToString() : null), false);
+      return;
+  }
+  ```
+
+</details>
 
 **Issue**: When the Headless restarts, the `_forwardedInviteRequests` dictionary is empty (not persisted), so old granted invite requests from SignalR are not found, causing warning spam.
 
